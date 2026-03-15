@@ -4,6 +4,7 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
+
 // Function to check if the user exists
 const doesExist = (username) => {
   let userswithsamename = users.filter((user) => {
@@ -27,9 +28,19 @@ public_users.post("/register", (req, res) => {
   return res.status(404).json({ message: "Unable to register user." });
 });
 
-// Get the book list available in the shop
-public_users.get('/', function (req, res) {
-  res.send(JSON.stringify(books, null, 4));
+public_users.get('/', async function (req, res) {
+  try {
+    const getBooksFromDB = new Promise((resolve, reject) => {
+      resolve(books); 
+    });
+
+    const booksData = await getBooksFromDB;
+
+    res.status(200).send(JSON.stringify(booksData, null, 4));
+    
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching books" });
+  }
 });
 
 // Get book details based on ISBN
