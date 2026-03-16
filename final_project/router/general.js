@@ -44,13 +44,33 @@ public_users.get('/', async function (req, res) {
 });
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
+public_users.get('/isbn/:isbn', async function (req, res) {
   const isbn = req.params.isbn;
-  const book = books[isbn];
+  
+  try {
+    // 1. Создаем наш асинхронный "запрос к БД"
+    const getBookFromDB = new Promise((resolve, reject) => {
+      const book = books[isbn];
+      
+      if (book) {
+        // Если книга есть, "выполняем обещание" успешно
+        resolve(book); 
+      } else {
+        // Если книги нет, "нарушаем обещание" (выдаем ошибку)
+        reject(new Error("Book not found")); 
+      }
+    });
 
-  if (book) {
-    return res.status(200).json(book);
-  } else {
+    // 2. Ждем результат. 
+    // Если Promise сделает resolve(), в переменную 'foundBook' попадет книга, и мы пойдем дальше.
+    // Если Promise сделает reject(), выполнение ОСТАНОВИТСЯ ЗДЕСЬ и мгновенно прыгнет в блок catch!
+    const foundBook = await getBookFromDB;
+
+    // 3. Отправляем успешный ответ
+    return res.status(200).json(foundBook);
+    
+  } catch (error) {
+    // 4. Сюда мы попадем только если сработал reject() внутри Promise
     return res.status(404).json({ message: "Book not found for the provided ISBN." });
   }
 });
